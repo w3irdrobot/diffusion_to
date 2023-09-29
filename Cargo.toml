@@ -1,8 +1,11 @@
 [package]
 authors = ["w3irdrobot <rob@w3ird.tech"]
+description = "Rust crate and CLI for interacting with the diffusion.to API"
 edition = "2021"
+homepage = "https://github.com/w3irdrobot/diffusion_to"
 license = "MIT"
 name = "diffusion_to"
+repository = "https://github.com/w3irdrobot/diffusion_to"
 version = "0.1.0"
 
 [dependencies]
