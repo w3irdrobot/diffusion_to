@@ -39,6 +39,10 @@ struct Args {
     /// The orientation of the image
     #[arg(short, long, default_value_t = String::from("square"))]
     orientation: String,
+
+    /// The file to output the image to
+    #[arg(long)]
+    out: Option<String>,
 }
 
 #[tokio::main]
@@ -68,8 +72,13 @@ async fn main() -> Result<()> {
         .last()
         .ok_or(anyhow!("invalid raw image data"))?;
     let binary = BASE64_STANDARD.decode(contents)?;
-    let hash = Sha256::digest(&binary);
-    let filename = format!("{}.png", hex::encode(hash));
+
+    let filename = if let Some(filename) = args.out {
+        filename
+    } else {
+        let hash = Sha256::digest(&binary);
+        format!("{}.png", hex::encode(hash))
+    };
 
     fs::write(&filename, binary).await?;
 
