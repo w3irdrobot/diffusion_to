@@ -25,20 +25,20 @@ struct Args {
     negative: Option<String>,
 
     /// The number of steps for the generation to use
-    #[arg(short, long, default_value_t = 50)]
-    steps: u16,
+    #[arg(short, long, value_enum, default_value_t = ImageSteps::Fifty)]
+    steps: ImageSteps,
 
     /// The image model to use
-    #[arg(short, long, default_value_t = String::from("beauty_realism"))]
-    model: String,
+    #[arg(short, long, value_enum, default_value_t = ImageModel::BeautyRealism)]
+    model: ImageModel,
 
     /// The size of the image
-    #[arg(long, default_value_t = String::from("small"))]
-    size: String,
+    #[arg(long, value_enum, default_value_t = ImageSize::Small)]
+    size: ImageSize,
 
     /// The orientation of the image
-    #[arg(short, long, default_value_t = String::from("square"))]
-    orientation: String,
+    #[arg(short, long, value_enum, default_value_t = ImageOrientation::Square)]
+    orientation: ImageOrientation,
 
     /// The file to output the image to
     #[arg(long)]

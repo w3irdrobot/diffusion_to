@@ -1,8 +1,12 @@
+use clap::builder::PossibleValue;
 use futures_timer::Delay;
 use reqwest::{header, Client, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_repr::*;
-use std::time::{Duration, Instant};
+use std::{
+    fmt::Display,
+    time::{Duration, Instant},
+};
 use thiserror::Error;
 
 const API_URL: &'static str = "https://diffusion.to/api/image";
@@ -164,6 +168,17 @@ pub enum ImageSteps {
     TwoHundred = 200,
 }
 
+impl Display for ImageSteps {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Fifty => write!(f, "50"),
+            Self::OneHundred => write!(f, "100"),
+            Self::OneHundredFifty => write!(f, "150"),
+            Self::TwoHundred => write!(f, "200"),
+        }
+    }
+}
+
 impl TryFrom<u16> for ImageSteps {
     type Error = DiffusionError;
 
@@ -178,6 +193,28 @@ impl TryFrom<u16> for ImageSteps {
     }
 }
 
+#[cfg(feature = "clap")]
+impl clap::ValueEnum for ImageSteps {
+    fn to_possible_value(&self) -> Option<clap::builder::PossibleValue> {
+        match self {
+            Self::Fifty => Some(PossibleValue::new("50")),
+            Self::OneHundred => Some(PossibleValue::new("100")),
+            Self::OneHundredFifty => Some(PossibleValue::new("150")),
+            Self::TwoHundred => Some(PossibleValue::new("200")),
+        }
+    }
+
+    fn value_variants<'a>() -> &'a [Self] {
+        &[
+            Self::Fifty,
+            Self::OneHundred,
+            Self::OneHundredFifty,
+            Self::TwoHundred,
+        ]
+    }
+}
+
+#[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub enum ImageModel {
@@ -189,6 +226,21 @@ pub enum ImageModel {
     StableDiffusion,
     ToonAnimated,
     FantasyAnimated,
+}
+
+impl Display for ImageModel {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::BeautyRealism => write!(f, "beauty_realism"),
+            Self::AestheticRealism => write!(f, "aesthetic_realism"),
+            Self::AnimeRealism => write!(f, "anime_realism"),
+            Self::AnalogRealism => write!(f, "analog_realism"),
+            Self::DreamReality => write!(f, "dream_reality"),
+            Self::StableDiffusion => write!(f, "stable_diffusion"),
+            Self::ToonAnimated => write!(f, "toon_animated"),
+            Self::FantasyAnimated => write!(f, "fantasy_animated"),
+        }
+    }
 }
 
 impl TryFrom<String> for ImageModel {
@@ -209,12 +261,23 @@ impl TryFrom<String> for ImageModel {
     }
 }
 
+#[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub enum ImageSize {
     Small,
     Medium,
     Large,
+}
+
+impl Display for ImageSize {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Small => write!(f, "small"),
+            Self::Medium => write!(f, "medium"),
+            Self::Large => write!(f, "large"),
+        }
+    }
 }
 
 impl TryFrom<String> for ImageSize {
@@ -230,12 +293,23 @@ impl TryFrom<String> for ImageSize {
     }
 }
 
+#[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
 pub enum ImageOrientation {
     Square,
     Landscape,
     Portrait,
+}
+
+impl Display for ImageOrientation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Square => write!(f, "square"),
+            Self::Landscape => write!(f, "landscape"),
+            Self::Portrait => write!(f, "portrait"),
+        }
+    }
 }
 
 impl TryFrom<String> for ImageOrientation {
