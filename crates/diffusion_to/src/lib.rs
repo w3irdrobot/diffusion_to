@@ -1,4 +1,30 @@
-use clap::builder::PossibleValue;
+//! # diffusion_to
+//!
+//! `diffusion_to` is a library for interacting with the API for [diffusion.to](https://diffusion.to).
+//! This API makes it easy to create AI-generated images and download them in a base64 format to be used
+//! however is needed. All options available in the UI are available through the library, using enums where
+//! possible to prevent invalid requests from being made.
+//!
+//! ## Example
+//!
+//! Basic usage:
+//!
+//! ```
+//! let client = DiffusionClient::new(args.api_key)?;
+//!
+//! let request = ImageRequest::new(args.prompt)
+//!     .update_steps(args.steps.try_into()?)
+//!     .update_model(args.model.try_into()?)
+//! let token = client.request_image(request).await?;
+//!
+//! // wait for up to five minutes
+//! let image = client
+//!     .check_and_wait(token, Some(Duration::from_secs(300)))
+//!     .await?;
+//!
+//! println!("{}", iamge.raw)
+//! ```
+
 use futures_timer::Delay;
 use reqwest::{header, Client, StatusCode};
 use serde::{Deserialize, Serialize};
@@ -19,30 +45,41 @@ pub mod prelude {
     };
 }
 
+/// Potential errors returned from the library
 #[derive(Error, Debug)]
 pub enum DiffusionError {
+    /// Errors returned from the underlying reqwest library
     #[error("internal reqwest error")]
     ReqwestError(#[from] reqwest::Error),
+    /// An invalid header
     #[error(transparent)]
     InvalidHeader(#[from] header::InvalidHeaderValue),
+    /// Image has not been fully created yet
     #[error("the image is not complete")]
     ImageStatusNotReady,
+    /// Unknown HTTP error returned from the API
     #[error("unknown http error {0}")]
     UnknownHttpError(StatusCode),
+    /// The image was not created within the timeout
     #[error("time expired without image finishing")]
     TimeExpired,
+    /// Invalid step amount given
     #[error("invalid step amount")]
     InvalidStepAmount,
+    /// Invalid model given
     #[error("invalid model")]
     InvalidModel,
+    /// Invalid size given
     #[error("invalid size")]
     InvalidSize,
+    /// Invalid orientation given
     #[error("invalid orientation")]
     InvalidOrientation,
 }
 
 pub type Result<T> = std::result::Result<T, DiffusionError>;
 
+/// The client used to interact with the diffusion.to API
 pub struct DiffusionClient {
     api: Client,
 }
@@ -63,6 +100,9 @@ impl DiffusionClient {
         Ok(Self { api })
     }
 
+    /// Request an image be created, using the given request to fill out the parameters
+    /// for the API image to create. It returns a token that can then be used to check
+    /// the status of the image and received the image when complete.
     pub async fn request_image(&self, request: ImageRequest) -> Result<ImageToken> {
         let body = self
             .api
@@ -76,6 +116,8 @@ impl DiffusionClient {
         Ok(body.into())
     }
 
+    /// Check the status of the image using the token received from
+    /// a [`request_image()`](DiffusionClient::request_image) call
     pub async fn check_status(&self, token: ImageToken) -> Result<DiffusionImage> {
         let res = self
             .api
@@ -91,6 +133,11 @@ impl DiffusionClient {
         }
     }
 
+    /// Check the status of the image and wait for a maximum amount of time for the image
+    /// to complete before returning the image response. This method will continue to poll
+    /// every five seconds until either the image has been completed or the max time is hit.
+    /// If `None` is passed for maximum time, then the method will poll indefinitely until the
+    /// image is complete.
     pub async fn check_and_wait(
         &self,
         token: ImageToken,
@@ -110,6 +157,8 @@ impl DiffusionClient {
     }
 }
 
+/// An image request to notify the API of the parameters of
+/// the image to create
 #[derive(Debug, Serialize)]
 pub struct ImageRequest {
     prompt: String,
@@ -159,6 +208,7 @@ impl ImageRequest {
     }
 }
 
+/// The available steps provided through the API
 #[derive(Debug, Serialize_repr, Deserialize_repr, Clone)]
 #[repr(u16)]
 pub enum ImageSteps {
@@ -196,6 +246,8 @@ impl TryFrom<u16> for ImageSteps {
 #[cfg(feature = "clap")]
 impl clap::ValueEnum for ImageSteps {
     fn to_possible_value(&self) -> Option<clap::builder::PossibleValue> {
+        use clap::builder::PossibleValue;
+
         match self {
             Self::Fifty => Some(PossibleValue::new("50")),
             Self::OneHundred => Some(PossibleValue::new("100")),
@@ -214,6 +266,7 @@ impl clap::ValueEnum for ImageSteps {
     }
 }
 
+/// The available image models provided through the API
 #[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
@@ -261,6 +314,7 @@ impl TryFrom<String> for ImageModel {
     }
 }
 
+/// The available image sizes provided through the API
 #[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
@@ -293,6 +347,7 @@ impl TryFrom<String> for ImageSize {
     }
 }
 
+/// The available iamge orientations provided through the API
 #[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "snake_case")]
@@ -336,6 +391,8 @@ impl From<ImageToken> for TokenBody {
     }
 }
 
+/// A token returned from the API that is used to check
+/// the status of the image and get the image when completed
 #[derive(Clone)]
 pub struct ImageToken(String);
 
@@ -350,6 +407,8 @@ struct StatusResponse {
     data: DiffusionImage,
 }
 
+/// The image response returned from the API when the
+/// image is complete
 #[derive(Deserialize, Debug, Clone)]
 pub struct DiffusionImage {
     pub id: u64,
