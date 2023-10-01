@@ -1,0 +1,18 @@
+[package]
+authors = ["w3irdrobot <rob@w3ird.tech"]
+description = "Rust CLI for interacting with the diffusion.to API"
+edition = "2021"
+homepage = "https://github.com/w3irdrobot/diffusion_to"
+license = "MIT"
+name = "diffusion_to_cli"
+repository = "https://github.com/w3irdrobot/diffusion_to"
+version = "0.1.0"
+
+[dependencies]
+anyhow = "1.0.75"
+base64 = "0.21.4"
+clap = { version = "4.4.6", features = ["derive"] }
+diffusion_to = { path = "../diffusion_to", features = ["clap"] }
+hex = "0.4.3"
+sha2 = "0.10.8"
+tokio = { version = "1.32.0", features = ["macros", "rt-multi-thread", "fs"] }
