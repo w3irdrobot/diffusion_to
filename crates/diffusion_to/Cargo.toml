@@ -6,7 +6,7 @@ homepage = "https://github.com/w3irdrobot/diffusion_to"
 license = "MIT"
 name = "diffusion_to"
 repository = "https://github.com/w3irdrobot/diffusion_to"
-version = "0.1.0"
+version = "0.2.0"
 
 [dependencies]
 clap = { version = "4", features = ["derive"], optional = true }
